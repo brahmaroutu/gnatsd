@@ -13,6 +13,11 @@ import (
 	"github.com/apcera/gnatsd/conf"
 )
 
+type Credential struct {
+	Username string `json:"user,omitempty"`
+	Password string `json:"-"`
+}
+
 // Options block for gnatsd server.
 type Options struct {
 	Host               string        `json:"addr"`
@@ -23,8 +28,7 @@ type Options struct {
 	NoSigs             bool          `json:"-"`
 	Logtime            bool          `json:"-"`
 	MaxConn            int           `json:"max_connections"`
-	Username           string        `json:"user,omitempty"`
-	Password           string        `json:"-"`
+	Credentials        []*Credential `json:"-"`
 	Authorization      string        `json:"-"`
 	PingInterval       time.Duration `json:"ping_interval"`
 	MaxPingsOut        int           `json:"ping_max"`
@@ -83,9 +87,8 @@ func ProcessConfigFile(configFile string) (*Options, error) {
 			opts.Logtime = v.(bool)
 		case "authorization":
 			am := v.(map[string]interface{})
-			auth := parseAuthorization(am)
-			opts.Username = auth.user
-			opts.Password = auth.pass
+			auth, creds := parseAuthorization(am)
+			opts.Credentials = creds
 			opts.AuthTimeout = auth.timeout
 		case "http_port", "monitor_port":
 			opts.HTTPPort = int(v.(int64))
@@ -115,7 +118,7 @@ func parseCluster(cm map[string]interface{}, opts *Options) error {
 			opts.ClusterHost = mv.(string)
 		case "authorization":
 			am := mv.(map[string]interface{})
-			auth := parseAuthorization(am)
+			auth, _ := parseAuthorization(am)
 			opts.ClusterUsername = auth.user
 			opts.ClusterPassword = auth.pass
 			opts.ClusterAuthTimeout = auth.timeout
@@ -136,14 +139,21 @@ func parseCluster(cm map[string]interface{}, opts *Options) error {
 }
 
 // Helper function to parse Authorization configs.
-func parseAuthorization(am map[string]interface{}) authorization {
+func parseAuthorization(am map[string]interface{}) (authorization, []*Credential) {
 	auth := authorization{}
+	credentials := make([]*Credential, 0, 1)
 	for mk, mv := range am {
 		switch strings.ToLower(mk) {
 		case "user", "username":
 			auth.user = mv.(string)
 		case "pass", "password":
 			auth.pass = mv.(string)
+		case "credentials":
+			credentials = processCredentials(mv.([]interface{}))
+			if len(credentials) > 0 {
+				auth.user = credentials[0].Username
+				auth.pass = credentials[0].Password
+			}
 		case "timeout":
 			at := float64(1)
 			switch mv.(type) {
@@ -155,7 +165,24 @@ func parseAuthorization(am map[string]interface{}) authorization {
 			auth.timeout = at
 		}
 	}
-	return auth
+	return auth, credentials
+}
+
+func processCredentials(creds []interface{}) []*Credential {
+	var credentials []*Credential
+	for _, nvpairs := range creds {
+		cred := Credential{}
+		for ck, cv := range nvpairs.(map[string]interface{}) {
+			switch strings.ToLower(ck) {
+			case "user":
+				cred.Username = cv.(string)
+			case "password":
+				cred.Password = cv.(string)
+			}
+		}
+		credentials = append(credentials, &cred)
+	}
+	return credentials
 }
 
 // MergeOptions will merge two options giving preference to the flagOpts
@@ -176,11 +203,14 @@ func MergeOptions(fileOpts, flagOpts *Options) *Options {
 	if flagOpts.Host != "" {
 		opts.Host = flagOpts.Host
 	}
-	if flagOpts.Username != "" {
-		opts.Username = flagOpts.Username
-	}
-	if flagOpts.Password != "" {
-		opts.Password = flagOpts.Password
+	for _, flagOpts_cred := range flagOpts.Credentials {
+		for _, cred := range opts.Credentials {
+			if cred.Username == flagOpts_cred.Username {
+				cred.Password = flagOpts_cred.Password
+				break
+			}
+			opts.Credentials = append(opts.Credentials, flagOpts_cred)
+		}
 	}
 	if flagOpts.Authorization != "" {
 		opts.Authorization = flagOpts.Authorization

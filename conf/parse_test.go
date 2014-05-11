@@ -59,8 +59,20 @@ cluster {
   port: 4244
 
   authorization {
-    user: route_user
-    password: top_secret
+    credentials = [
+      {                                                                                                                                                                                 
+        password: natsz
+        user: natsz
+      }
+      {                                                                                                                                                                                  
+        password: natsy
+        user: natsy
+      }
+      {                                                                                                                                                                                  
+        password: natsx
+        user: natsx
+      }
+    ]
     timeout: 1
   }
 
@@ -82,9 +94,21 @@ func TestSample2(t *testing.T) {
 		"cluster": map[string]interface{}{
 			"port": int64(4244),
 			"authorization": map[string]interface{}{
-				"user":     "route_user",
-				"password": "top_secret",
-				"timeout":  int64(1),
+				"credentials": []interface{}{
+					map[string]interface{}{
+						"password": "natsz",
+						"user":     "natsz",
+					},
+					map[string]interface{}{
+						"password": "natsy",
+						"user":     "natsy",
+					},
+					map[string]interface{}{
+						"password": "natsx",
+						"user":     "natsx",
+					},
+				},
+				"timeout": int64(1),
 			},
 			"routes": []interface{}{
 				"nats-route://foo:bar@apcera.me:4245",

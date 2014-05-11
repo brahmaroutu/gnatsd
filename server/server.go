@@ -79,7 +79,7 @@ func New(opts *Options) *Server {
 		MaxPayload:   MAX_PAYLOAD_SIZE,
 	}
 	// Check for Auth items
-	if opts.Username != "" || opts.Authorization != "" {
+	if len(opts.Credentials) > 0 || opts.Authorization != "" {
 		info.AuthRequired = true
 	}
 	s := &Server{
@@ -407,11 +407,21 @@ func (s *Server) checkClientAuth(c *client) bool {
 	// Authorization tokens trump username/password
 	if s.opts.Authorization != "" {
 		return s.opts.Authorization == c.opts.Authorization
-	} else if s.opts.Username != c.opts.Username ||
-		s.opts.Password != c.opts.Password {
+	} else if !s.validCredentials(c) {
 		return false
 	}
 	return true
+}
+
+func (s *Server) validCredentials(c *client) bool {
+	retval := false
+	for _, s_credential := range s.opts.Credentials {
+		if (s_credential.Username == c.opts.Username) &&
+			(s_credential.Password == c.opts.Password) {
+			return true
+		}
+	}
+	return retval
 }
 
 func (s *Server) checkRouterAuth(c *client) bool {

@@ -17,8 +17,7 @@ func TestRouteConfig(t *testing.T) {
 	golden := &Options{
 		Host:               "apcera.me",
 		Port:               4242,
-		Username:           "derek",
-		Password:           "bella",
+		Credentials:        []*Credential{&Credential{"derek", "bella"}},
 		AuthTimeout:        1.0,
 		ClusterHost:        "127.0.0.1",
 		ClusterPort:        4244,

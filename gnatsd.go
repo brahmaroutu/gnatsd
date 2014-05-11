@@ -19,6 +19,8 @@ func main() {
 	var showVersion bool
 	var debugAndTrace bool
 	var configFile string
+	var Username string
+	var Password string
 
 	// Parse flags
 	flag.IntVar(&opts.Port, "port", 0, "Port to listen on.")
@@ -33,8 +35,8 @@ func main() {
 	flag.BoolVar(&debugAndTrace, "DV", false, "Enable Debug and Trace logging.")
 	flag.BoolVar(&opts.Logtime, "T", true, "Timestamp log entries.")
 	flag.BoolVar(&opts.Logtime, "logtime", true, "Timestamp log entries.")
-	flag.StringVar(&opts.Username, "user", "", "Username required for connection.")
-	flag.StringVar(&opts.Password, "pass", "", "Password required for connection.")
+	flag.StringVar(&Username, "user", "", "Username required for connection.")
+	flag.StringVar(&Password, "pass", "", "Password required for connection.")
 	flag.StringVar(&opts.Authorization, "auth", "", "Authorization token required for connection.")
 	flag.IntVar(&opts.HTTPPort, "m", 0, "HTTP Port for /varz, /connz endpoints.")
 	flag.IntVar(&opts.HTTPPort, "http_port", 0, "HTTP Port for /varz, /connz endpoints.")
@@ -71,6 +73,11 @@ func main() {
 		case "help":
 			server.Usage()
 		}
+	}
+
+	if len(Username) > 0 && len(Password) > 0 {
+		opts.Credentials = make([]*server.Credential, 0, 1)
+		opts.Credentials = append(opts.Credentials, &server.Credential{Username, Password})
 	}
 
 	// Parse config if given

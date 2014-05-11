@@ -109,8 +109,7 @@ const AUTH_PASS = "foobar"
 func runAuthServerWithUserPass() *server.Server {
 	opts := DefaultTestOptions
 	opts.Port = AUTH_PORT
-	opts.Username = AUTH_USER
-	opts.Password = AUTH_PASS
+	opts.Credentials = []*server.Credential{&server.Credential{AUTH_USER,AUTH_PASS}}
 	return RunServer(&opts)
 }
 
