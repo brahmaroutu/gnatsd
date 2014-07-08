@@ -59,20 +59,8 @@ cluster {
   port: 4244
 
   authorization {
-    credentials = [
-      {                                                                                                                                                                                 
-        password: natsz
-        user: natsz
-      }
-      {                                                                                                                                                                                  
-        password: natsy
-        user: natsy
-      }
-      {                                                                                                                                                                                  
-        password: natsx
-        user: natsx
-      }
-    ]
+    user: route_user
+    password: top_secret
     timeout: 1
   }
 
@@ -94,20 +82,8 @@ func TestSample2(t *testing.T) {
 		"cluster": map[string]interface{}{
 			"port": int64(4244),
 			"authorization": map[string]interface{}{
-				"credentials": []interface{}{
-					map[string]interface{}{
-						"password": "natsz",
-						"user":     "natsz",
-					},
-					map[string]interface{}{
-						"password": "natsy",
-						"user":     "natsy",
-					},
-					map[string]interface{}{
-						"password": "natsx",
-						"user":     "natsx",
-					},
-				},
+			    "user":     "route_user",
+				"password": "top_secret",
 				"timeout": int64(1),
 			},
 			"routes": []interface{}{
@@ -154,3 +130,75 @@ func TestSample4(t *testing.T) {
 	}
 	test(t, sample4, ex)
 }
+
+
+var cluster_extra_credentials = `
+cluster {
+  port: 4244
+
+  authorization {
+    user: route_user
+    password: top_secret    
+    credentials = [
+      {                                                                                                                                                                                 
+        password: natsz
+        user: natsz
+      }
+      {                                                                                                                                                                                  
+        password: natsy
+        user: natsy
+      }
+      {                                                                                                                                                                                  
+        password: natsx
+        user: natsx
+      }
+    ]
+    timeout: 1
+  }
+
+  # Routes are actively solicited and connected to from this server.
+  # Other servers can connect to us if they supply the correct credentials
+  # in their routes definitions from above.
+
+  // Test both styles of comments
+
+  routes = [
+    nats-route://foo:bar@apcera.me:4245
+    nats-route://foo:bar@apcera.me:4246
+  ]
+}
+`
+
+func TestExtraCredentials(t *testing.T) {
+    ex := map[string]interface{}{
+        "cluster": map[string]interface{}{
+            "port": int64(4244),
+            "authorization": map[string]interface{}{
+                "user":     "route_user",
+                "password": "top_secret",
+                "credentials": []interface{}{
+                    map[string]interface{}{
+                        "password": "natsz",
+                        "user":     "natsz",
+                    },
+                    map[string]interface{}{
+                        "password": "natsy",
+                        "user":     "natsy",
+                    },
+                    map[string]interface{}{
+                        "password": "natsx",
+                        "user":     "natsx",
+                    },
+                },
+                "timeout": int64(1),
+            },
+            "routes": []interface{}{
+                "nats-route://foo:bar@apcera.me:4245",
+                "nats-route://foo:bar@apcera.me:4246",
+            },
+        },
+    }
+
+    test(t, cluster_extra_credentials, ex)
+}
+

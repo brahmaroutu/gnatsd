@@ -28,7 +28,9 @@ type Options struct {
 	NoSigs             bool          `json:"-"`
 	Logtime            bool          `json:"-"`
 	MaxConn            int           `json:"max_connections"`
-	Credentials        []*Credential `json:"-"`
+	Username           string        `json:"user,omitempty"`
+ 	Password           string        `json:"-"`	
+ 	Credentials        []*Credential `json:"-"`
 	Authorization      string        `json:"-"`
 	PingInterval       time.Duration `json:"ping_interval"`
 	MaxPingsOut        int           `json:"ping_max"`
@@ -87,9 +89,11 @@ func ProcessConfigFile(configFile string) (*Options, error) {
 			opts.Logtime = v.(bool)
 		case "authorization":
 			am := v.(map[string]interface{})
-			auth, creds := parseAuthorization(am)
-			opts.Credentials = creds
-			opts.AuthTimeout = auth.timeout
+			auth,creds := parseAuthorization(am)
+			opts.Username = auth.user
+ 			opts.Password = auth.pass
+ 			opts.Credentials = creds 
+ 			opts.AuthTimeout = auth.timeout
 		case "http_port", "monitor_port":
 			opts.HTTPPort = int(v.(int64))
 		case "cluster":
@@ -118,10 +122,11 @@ func parseCluster(cm map[string]interface{}, opts *Options) error {
 			opts.ClusterHost = mv.(string)
 		case "authorization":
 			am := mv.(map[string]interface{})
-			auth, _ := parseAuthorization(am)
+			auth,creds := parseAuthorization(am)
 			opts.ClusterUsername = auth.user
 			opts.ClusterPassword = auth.pass
 			opts.ClusterAuthTimeout = auth.timeout
+ 			opts.Credentials = creds
 		case "routes":
 			ra := mv.([]interface{})
 			opts.Routes = make([]*url.URL, 0, len(ra))
@@ -141,7 +146,7 @@ func parseCluster(cm map[string]interface{}, opts *Options) error {
 // Helper function to parse Authorization configs.
 func parseAuthorization(am map[string]interface{}) (authorization, []*Credential) {
 	auth := authorization{}
-	credentials := make([]*Credential, 0, 1)
+	var credentials []*Credential
 	for mk, mv := range am {
 		switch strings.ToLower(mk) {
 		case "user", "username":
@@ -150,10 +155,6 @@ func parseAuthorization(am map[string]interface{}) (authorization, []*Credential
 			auth.pass = mv.(string)
 		case "credentials":
 			credentials = processCredentials(mv.([]interface{}))
-			if len(credentials) > 0 {
-				auth.user = credentials[0].Username
-				auth.pass = credentials[0].Password
-			}
 		case "timeout":
 			at := float64(1)
 			switch mv.(type) {
@@ -165,6 +166,11 @@ func parseAuthorization(am map[string]interface{}) (authorization, []*Credential
 			auth.timeout = at
 		}
 	}
+	
+	if len(auth.user) == 0 {
+		auth.user = credentials[0].Username
+		auth.pass = credentials[0].Password	
+	}  
 	return auth, credentials
 }
 
@@ -182,6 +188,7 @@ func processCredentials(creds []interface{}) []*Credential {
 		}
 		credentials = append(credentials, &cred)
 	}
+	
 	return credentials
 }
 
@@ -203,6 +210,12 @@ func MergeOptions(fileOpts, flagOpts *Options) *Options {
 	if flagOpts.Host != "" {
 		opts.Host = flagOpts.Host
 	}
+	if flagOpts.Username != "" {
+		opts.Username = flagOpts.Username
+	}
+	if flagOpts.Password != "" {
+		opts.Password = flagOpts.Password
+	}	
 	for _, flagOpts_cred := range flagOpts.Credentials {
 		for _, cred := range opts.Credentials {
 			if cred.Username == flagOpts_cred.Username {
