@@ -52,7 +52,7 @@ func TestRouteConfigWithExtraCredentials(t *testing.T) {
 		Port:               4242,
 		Username:           "derek",
 		Password:           "bella",
-		Credentials: []*Credential{&Credential{"derek2", "bella2"}},
+		ExtraCredentials: []*Credential{&Credential{"derek2", "bella2"}},
 		AuthTimeout:        1.0,
 		ClusterHost:        "127.0.0.1",
 		ClusterPort:        4244,

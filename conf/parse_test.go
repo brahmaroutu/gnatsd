@@ -139,7 +139,7 @@ cluster {
   authorization {
     user: route_user
     password: top_secret    
-    credentials = [
+    extracredentials = [
       {                                                                                                                                                                                 
         password: natsz
         user: natsz
@@ -176,7 +176,7 @@ func TestExtraCredentials(t *testing.T) {
             "authorization": map[string]interface{}{
                 "user":     "route_user",
                 "password": "top_secret",
-                "credentials": []interface{}{
+                "extracredentials": []interface{}{
                     map[string]interface{}{
                         "password": "natsz",
                         "user":     "natsz",

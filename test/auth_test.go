@@ -111,14 +111,17 @@ const AUTH_PASS2 = "foobar2"
 func runAuthServerWithUserPass() *server.Server {
 	opts := DefaultTestOptions
 	opts.Port = AUTH_PORT
-	opts.Credentials = []*server.Credential{&server.Credential{AUTH_USER,AUTH_PASS}}
+	opts.Username = AUTH_USER
+	opts.Password = AUTH_PASS
 	return RunServer(&opts)
 }
 
 func runAuthServerWithMultipleUserPass() *server.Server {
 	opts := DefaultTestOptions
 	opts.Port = AUTH_PORT
-	opts.Credentials = []*server.Credential{&server.Credential{AUTH_USER,AUTH_PASS},&server.Credential{AUTH_USER2,AUTH_PASS2}}
+	opts.Username = AUTH_USER
+	opts.Password = AUTH_PASS
+	opts.ExtraCredentials = []*server.Credential{&server.Credential{AUTH_USER2,AUTH_PASS2}}
 	return RunServer(&opts)
 }
 
@@ -161,7 +164,7 @@ func TestPasswordClientGoodConnect(t *testing.T) {
 	doAuthConnect(t, c, "", AUTH_USER, AUTH_PASS)
 	expectResult(t, c, okRe)
 }
-func TestAlternatePasswordBadClientConnect(t *testing.T) {
+func TestExtraCredentialsBadClientConnect(t *testing.T) {
 	s := runAuthServerWithMultipleUserPass()
 	defer s.Shutdown()
 	c := createClientConn(t, "localhost", AUTH_PORT)
@@ -170,12 +173,21 @@ func TestAlternatePasswordBadClientConnect(t *testing.T) {
 	doAuthConnect(t, c, "", AUTH_USER2, AUTH_PASS)
 	expectResult(t, c, errRe)
 }
-func TestAlternatePasswordClientGoodConnect(t *testing.T) {
+func TestExtraCredentialsClientGoodConnect(t *testing.T) {
 	s := runAuthServerWithMultipleUserPass()
 	defer s.Shutdown()
 	c := createClientConn(t, "localhost", AUTH_PORT)
 	defer c.Close()
 	expectAuthRequired(t, c)
 	doAuthConnect(t, c, "", AUTH_USER2, AUTH_PASS2)
+	expectResult(t, c, okRe)
+}
+func TestExtraCredentialsClientGoodConnect2(t *testing.T) {
+	s := runAuthServerWithMultipleUserPass()
+	defer s.Shutdown()
+	c := createClientConn(t, "localhost", AUTH_PORT)
+	defer c.Close()
+	expectAuthRequired(t, c)
+	doAuthConnect(t, c, "", AUTH_USER, AUTH_PASS)
 	expectResult(t, c, okRe)
 }

@@ -30,7 +30,7 @@ type Options struct {
 	MaxConn            int           `json:"max_connections"`
 	Username           string        `json:"user,omitempty"`
  	Password           string        `json:"-"`	
- 	Credentials        []*Credential `json:"-"`
+ 	ExtraCredentials   []*Credential `json:"-"`
 	Authorization      string        `json:"-"`
 	PingInterval       time.Duration `json:"ping_interval"`
 	MaxPingsOut        int           `json:"ping_max"`
@@ -92,7 +92,7 @@ func ProcessConfigFile(configFile string) (*Options, error) {
 			auth,creds := parseAuthorization(am)
 			opts.Username = auth.user
  			opts.Password = auth.pass
- 			opts.Credentials = creds 
+ 			opts.ExtraCredentials = creds 
  			opts.AuthTimeout = auth.timeout
 		case "http_port", "monitor_port":
 			opts.HTTPPort = int(v.(int64))
@@ -126,7 +126,7 @@ func parseCluster(cm map[string]interface{}, opts *Options) error {
 			opts.ClusterUsername = auth.user
 			opts.ClusterPassword = auth.pass
 			opts.ClusterAuthTimeout = auth.timeout
- 			opts.Credentials = creds
+ 			opts.ExtraCredentials = creds
 		case "routes":
 			ra := mv.([]interface{})
 			opts.Routes = make([]*url.URL, 0, len(ra))
@@ -153,7 +153,7 @@ func parseAuthorization(am map[string]interface{}) (authorization, []*Credential
 			auth.user = mv.(string)
 		case "pass", "password":
 			auth.pass = mv.(string)
-		case "credentials":
+		case "extracredentials":
 			credentials = processCredentials(mv.([]interface{}))
 		case "timeout":
 			at := float64(1)
@@ -167,10 +167,6 @@ func parseAuthorization(am map[string]interface{}) (authorization, []*Credential
 		}
 	}
 	
-	if len(auth.user) == 0 {
-		auth.user = credentials[0].Username
-		auth.pass = credentials[0].Password	
-	}  
 	return auth, credentials
 }
 
@@ -216,13 +212,13 @@ func MergeOptions(fileOpts, flagOpts *Options) *Options {
 	if flagOpts.Password != "" {
 		opts.Password = flagOpts.Password
 	}	
-	for _, flagOpts_cred := range flagOpts.Credentials {
-		for _, cred := range opts.Credentials {
+	for _, flagOpts_cred := range flagOpts.ExtraCredentials {
+		for _, cred := range opts.ExtraCredentials {
 			if cred.Username == flagOpts_cred.Username {
 				cred.Password = flagOpts_cred.Password
 				break
 			}
-			opts.Credentials = append(opts.Credentials, flagOpts_cred)
+			opts.ExtraCredentials = append(opts.ExtraCredentials, flagOpts_cred)
 		}
 	}
 	if flagOpts.Authorization != "" {
