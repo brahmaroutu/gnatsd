@@ -73,7 +73,6 @@ func main() {
 		}
 	}
 
-
 	// Parse config if given
 	if configFile != "" {
 		fileOpts, err := server.ProcessConfigFile(configFile)

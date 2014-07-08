@@ -95,7 +95,6 @@ func TestConfigFileWithExtraCredentials(t *testing.T) {
 	}
 }
 
-
 func TestMergeOverrides(t *testing.T) {
 	golden := &Options{
 		Host:        "apcera.me",

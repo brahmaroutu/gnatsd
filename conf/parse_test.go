@@ -82,9 +82,9 @@ func TestSample2(t *testing.T) {
 		"cluster": map[string]interface{}{
 			"port": int64(4244),
 			"authorization": map[string]interface{}{
-			    "user":     "route_user",
+				"user":     "route_user",
 				"password": "top_secret",
-				"timeout": int64(1),
+				"timeout":  int64(1),
 			},
 			"routes": []interface{}{
 				"nats-route://foo:bar@apcera.me:4245",
