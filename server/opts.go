@@ -134,12 +134,12 @@ func (opts *Options)  parseAuthorization(am map[string]interface{}, cluster bool
 		case "user", "username":
 			credential.Username = mv.(string)
 			if (cluster) {
-			    opts.ClusterCredentials = append(opts.ClusterCredentials,&credential)
+				opts.ClusterCredentials = append(opts.ClusterCredentials,&credential)
 			} else {
 				opts.Credentials = append(opts.Credentials, &credential)
 			}
 		case "pass", "password":
-		    credential.Password = mv.(string)
+			credential.Password = mv.(string)
 		case "credentials":
 			opts.processCredentials(mv.([]interface{}),cluster)
 		case "timeout":
@@ -151,7 +151,7 @@ func (opts *Options)  parseAuthorization(am map[string]interface{}, cluster bool
 				at = mv.(float64)
 			}
 			if (cluster) {
-			    opts.ClusterAuthTimeout = at 
+				opts.ClusterAuthTimeout = at 
 			} else {
 				opts.AuthTimeout = at
 			}
@@ -172,7 +172,7 @@ func (opts *Options) processCredentials(creds []interface{}, cluster bool) []*Cr
 			}
 		}
 		if (cluster) {
-		    opts.ClusterCredentials = append(opts.ClusterCredentials, &credential)
+			opts.ClusterCredentials = append(opts.ClusterCredentials, &credential)
 		} else {
 			opts.Credentials = append(opts.Credentials, &credential)
 		}

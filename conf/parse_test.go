@@ -132,13 +132,11 @@ func TestSample4(t *testing.T) {
 }
 
 
-var cluster_extra_credentials = `
+var cluster_credentials = `
 cluster {
   port: 4244
 
   authorization {
-    user: route_user
-    password: top_secret    
     credentials = [
       {                                                                                                                                                                                 
         password: natsz
@@ -174,8 +172,6 @@ func TestExtraCredentials(t *testing.T) {
         "cluster": map[string]interface{}{
             "port": int64(4244),
             "authorization": map[string]interface{}{
-                "user":     "route_user",
-                "password": "top_secret",
                 "credentials": []interface{}{
                     map[string]interface{}{
                         "password": "natsz",
@@ -199,6 +195,6 @@ func TestExtraCredentials(t *testing.T) {
         },
     }
 
-    test(t, cluster_extra_credentials, ex)
+    test(t, cluster_credentials, ex)
 }
 
