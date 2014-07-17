@@ -64,7 +64,7 @@ func RunServer(opts *server.Options) *server.Server {
 			// Retry. We might take a little while to open a connection.
 			continue
 		}
-
+	
 		conn, err := net.Dial("tcp", addr.String())
 		if err != nil {
 			time.Sleep(50 * time.Millisecond)

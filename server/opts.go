@@ -30,7 +30,7 @@ type Options struct {
 	MaxConn            int           `json:"max_connections"`
 	Username           string        `json:"user,omitempty"`
  	Password           string        `json:"-"`	
- 	ExtraCredentials   []*Credential `json:"-"`
+ 	Credentials        []*Credential `json:"-"`
 	Authorization      string        `json:"-"`
 	PingInterval       time.Duration `json:"ping_interval"`
 	MaxPingsOut        int           `json:"ping_max"`
@@ -43,17 +43,12 @@ type Options struct {
 	ClusterPort        int           `json:"port"`
 	ClusterUsername    string        `json:"-"`
 	ClusterPassword    string        `json:"-"`
+ 	ClusterCredentials []*Credential `json:"-"`
 	ClusterAuthTimeout float64       `json:"auth_timeout"`
 	Routes             []*url.URL    `json:"-"`
 	ProfPort           int           `json:"-"`
 	PidFile            string        `json:"-"`
 	LogFile            string        `json:"-"`
-}
-
-type authorization struct {
-	user    string
-	pass    string
-	timeout float64
 }
 
 // ProcessConfigFile processes a configuration file.
@@ -89,16 +84,12 @@ func ProcessConfigFile(configFile string) (*Options, error) {
 			opts.Logtime = v.(bool)
 		case "authorization":
 			am := v.(map[string]interface{})
-			auth,creds := parseAuthorization(am)
-			opts.Username = auth.user
- 			opts.Password = auth.pass
- 			opts.ExtraCredentials = creds 
- 			opts.AuthTimeout = auth.timeout
+			opts.parseAuthorization(am,false)
 		case "http_port", "monitor_port":
 			opts.HTTPPort = int(v.(int64))
 		case "cluster":
 			cm := v.(map[string]interface{})
-			if err := parseCluster(cm, opts); err != nil {
+			if err := opts.parseCluster(cm); err != nil {
 				return nil, err
 			}
 		case "logfile", "log_file":
@@ -113,7 +104,7 @@ func ProcessConfigFile(configFile string) (*Options, error) {
 }
 
 // parseCluster will parse the cluster config.
-func parseCluster(cm map[string]interface{}, opts *Options) error {
+func (opts *Options) parseCluster(cm map[string]interface{}) error {
 	for mk, mv := range cm {
 		switch strings.ToLower(mk) {
 		case "port":
@@ -122,11 +113,7 @@ func parseCluster(cm map[string]interface{}, opts *Options) error {
 			opts.ClusterHost = mv.(string)
 		case "authorization":
 			am := mv.(map[string]interface{})
-			auth,creds := parseAuthorization(am)
-			opts.ClusterUsername = auth.user
-			opts.ClusterPassword = auth.pass
-			opts.ClusterAuthTimeout = auth.timeout
- 			opts.ExtraCredentials = creds
+			opts.parseAuthorization(am,true)
 		case "routes":
 			ra := mv.([]interface{})
 			opts.Routes = make([]*url.URL, 0, len(ra))
@@ -144,17 +131,23 @@ func parseCluster(cm map[string]interface{}, opts *Options) error {
 }
 
 // Helper function to parse Authorization configs.
-func parseAuthorization(am map[string]interface{}) (authorization, []*Credential) {
-	auth := authorization{}
-	var credentials []*Credential
+func (opts *Options)  parseAuthorization(am map[string]interface{}, cluster bool) {
 	for mk, mv := range am {
 		switch strings.ToLower(mk) {
 		case "user", "username":
-			auth.user = mv.(string)
+			if (cluster) {
+			    opts.ClusterUsername = mv.(string)
+			} else {
+			    opts.Username = mv.(string)
+			}
 		case "pass", "password":
-			auth.pass = mv.(string)
-		case "extracredentials":
-			credentials = processCredentials(mv.([]interface{}))
+			if (cluster) {
+			    opts.ClusterPassword = mv.(string)
+			} else {
+			    opts.Password = mv.(string)
+			}
+		case "credentials":
+			opts.processCredentials(mv.([]interface{}),cluster)
 		case "timeout":
 			at := float64(1)
 			switch mv.(type) {
@@ -163,14 +156,16 @@ func parseAuthorization(am map[string]interface{}) (authorization, []*Credential
 			case float64:
 				at = mv.(float64)
 			}
-			auth.timeout = at
+			if (cluster) {
+			    opts.ClusterAuthTimeout = at
+			} else {
+				opts.AuthTimeout = at
+			}
 		}
 	}
-	
-	return auth, credentials
 }
 
-func processCredentials(creds []interface{}) []*Credential {
+func (opts *Options) processCredentials(creds []interface{}, cluster bool) []*Credential {
 	var credentials []*Credential
 	for _, nvpairs := range creds {
 		cred := Credential{}
@@ -182,7 +177,12 @@ func processCredentials(creds []interface{}) []*Credential {
 				cred.Password = cv.(string)
 			}
 		}
-		credentials = append(credentials, &cred)
+		if (cluster) {
+		    opts.ClusterCredentials = append(opts.ClusterCredentials, &cred)
+		} else {
+			opts.Credentials = append(opts.Credentials, &cred)
+		}
+		
 	}
 	
 	return credentials
@@ -212,13 +212,13 @@ func MergeOptions(fileOpts, flagOpts *Options) *Options {
 	if flagOpts.Password != "" {
 		opts.Password = flagOpts.Password
 	}	
-	for _, flagOpts_cred := range flagOpts.ExtraCredentials {
-		for _, cred := range opts.ExtraCredentials {
+	for _, flagOpts_cred := range flagOpts.Credentials {
+		for _, cred := range opts.Credentials {
 			if cred.Username == flagOpts_cred.Username {
 				cred.Password = flagOpts_cred.Password
 				break
 			}
-			opts.ExtraCredentials = append(opts.ExtraCredentials, flagOpts_cred)
+			opts.Credentials = append(opts.Credentials, flagOpts_cred)
 		}
 	}
 	if flagOpts.Authorization != "" {

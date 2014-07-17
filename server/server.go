@@ -79,7 +79,7 @@ func New(opts *Options) *Server {
 		MaxPayload:   MAX_PAYLOAD_SIZE,
 	}
 	// Check for Auth items
-	if  opts.Username != "" || opts.Authorization != "" || len(opts.ExtraCredentials) > 0 {
+	if  opts.Username != "" || opts.Authorization != "" || len(opts.Credentials) > 0 {
 		info.AuthRequired = true
 	}
 	s := &Server{
@@ -418,7 +418,7 @@ func (s *Server) validCredentials(c *client) bool {
 		s.opts.Password == c.opts.Password {
 		return true
 	}
-	for _, s_credential := range s.opts.ExtraCredentials {
+	for _, s_credential := range s.opts.Credentials {
 		if (s_credential.Username == c.opts.Username) &&
 			(s_credential.Password == c.opts.Password) {
 			return true
@@ -431,11 +431,17 @@ func (s *Server) checkRouterAuth(c *client) bool {
 	if !s.routeInfo.AuthRequired {
 		return true
 	}
-	if s.opts.ClusterUsername != c.opts.Username ||
-		s.opts.ClusterPassword != c.opts.Password {
-		return false
+	if s.opts.ClusterUsername == c.opts.Username &&
+		s.opts.ClusterPassword == c.opts.Password {
+		return true
 	}
-	return true
+	for _, s_credential := range s.opts.ClusterCredentials {
+		if (s_credential.Username == c.opts.Username) &&
+			(s_credential.Password == c.opts.Password) {
+			return true
+		}
+	}
+	return false
 }
 
 // Check auth and return boolean indicating if client is ok

@@ -67,13 +67,11 @@ func TestConfigFile(t *testing.T) {
 	}
 }
 
-func TestConfigFileWithExtraCredentials(t *testing.T) {
+func TestConfigFileWithCredentials(t *testing.T) {
 	golden := &Options{
 		Host:        "apcera.me",
 		Port:        4242,
-		Username:    "derek",
-		Password:    "bella",
-		ExtraCredentials: []*Credential{&Credential{"derek2", "bella2"}},
+		Credentials: []*Credential{&Credential{"derek2", "bella2"}},
 		AuthTimeout: 1.0,
 		Debug:       false,
 		Trace:       true,
@@ -84,7 +82,35 @@ func TestConfigFileWithExtraCredentials(t *testing.T) {
 		ProfPort:    6543,
 	}
 
-	opts, err := ProcessConfigFile("./configs/test_extra_credentials.conf")
+	opts, err := ProcessConfigFile("./configs/test_credentials.conf")
+	if err != nil {
+		t.Fatalf("Received an error reading config file: %v\n", err)
+	}
+
+	if !reflect.DeepEqual(golden, opts) {
+		t.Fatalf("Options are incorrect.\nexpected: %+v\ngot: %+v",
+			golden, opts)
+	}
+}
+
+func TestConfigFileWithAuthAndCredentials(t *testing.T) {
+	golden := &Options{
+		Host:        "apcera.me",
+		Username:    "derek",
+		Password:    "bella",
+		Port:        4242,
+		Credentials: []*Credential{&Credential{"derek2", "bella2"}},
+		AuthTimeout: 1.0,
+		Debug:       false,
+		Trace:       true,
+		Logtime:     false,
+		HTTPPort:    8222,
+		LogFile:     "/tmp/gnatsd.log",
+		PidFile:     "/tmp/gnatsd.pid",
+		ProfPort:    6543,
+	}
+
+	opts, err := ProcessConfigFile("./configs/test_auth_and_credentials.conf")
 	if err != nil {
 		t.Fatalf("Received an error reading config file: %v\n", err)
 	}
@@ -132,13 +158,11 @@ func TestMergeOverrides(t *testing.T) {
 	}
 }
 
-func TestMergeOverridesWithExtraCredentials(t *testing.T) {
+func TestMergeOverridesWithCredentials(t *testing.T) {
 	golden := &Options{
 		Host:        "apcera.me",
 		Port:        2222,
-		Username:    "derek",
-		Password:    "spooky",
-		ExtraCredentials: []*Credential{&Credential{"derek2", "spooky2"}},
+		Credentials: []*Credential{&Credential{"derek2", "spooky2"}},
 		AuthTimeout: 1.0,
 		Debug:       true,
 		Trace:       true,
@@ -148,7 +172,44 @@ func TestMergeOverridesWithExtraCredentials(t *testing.T) {
 		PidFile:     "/tmp/gnatsd.pid",
 		ProfPort:    6789,
 	}
-	fopts, err := ProcessConfigFile("./configs/test_extra_credentials.conf")
+	fopts, err := ProcessConfigFile("./configs/test_credentials.conf")
+	if err != nil {
+		t.Fatalf("Received an error reading config file: %v\n", err)
+	}
+
+	// Overrides via flags
+	opts := &Options{
+		Port:        2222,
+		Credentials: []*Credential{&Credential{"derek2", "spooky2"}},
+		Debug:       true,
+		HTTPPort:    DEFAULT_HTTP_PORT,
+		ProfPort:    6789,
+	}
+	merged := MergeOptions(fopts, opts)
+
+	if !reflect.DeepEqual(golden, merged) {
+		t.Fatalf("Options are incorrect.\nexpected: %+v\ngot: %+v",
+			golden, merged)
+	}
+}
+
+func TestMergeOverridesWithAuthAndCredentials(t *testing.T) {
+	golden := &Options{
+		Host:        "apcera.me",
+		Port:        2222,
+		Username:    "derek",
+		Password:    "spooky",
+		Credentials: []*Credential{&Credential{"derek2", "spooky2"}},
+		AuthTimeout: 1.0,
+		Debug:       true,
+		Trace:       true,
+		Logtime:     false,
+		HTTPPort:    DEFAULT_HTTP_PORT,
+		LogFile:     "/tmp/gnatsd.log",
+		PidFile:     "/tmp/gnatsd.pid",
+		ProfPort:    6789,
+	}
+	fopts, err := ProcessConfigFile("./configs/test_auth_and_credentials.conf")
 	if err != nil {
 		t.Fatalf("Received an error reading config file: %v\n", err)
 	}
@@ -158,7 +219,7 @@ func TestMergeOverridesWithExtraCredentials(t *testing.T) {
 		Port:        2222,
 		Username:    "derek",
 		Password:    "spooky",
-		ExtraCredentials: []*Credential{&Credential{"derek2", "spooky2"}},
+		Credentials: []*Credential{&Credential{"derek2", "spooky2"}},
 		Debug:       true,
 		HTTPPort:    DEFAULT_HTTP_PORT,
 		ProfPort:    6789,

@@ -41,8 +41,39 @@ func TestRouteConfig(t *testing.T) {
 	}
 }
 
-func TestRouteConfigWithExtraCredentials(t *testing.T) {
-	opts, err := ProcessConfigFile("./configs/cluster_extra_credentials.conf")
+func TestRouteConfigWithCredentials(t *testing.T) {
+	opts, err := ProcessConfigFile("./configs/cluster_credentials.conf")
+	if err != nil {
+		t.Fatalf("Received an error reading route config file: %v\n", err)
+	}
+
+	golden := &Options{
+		Host:               "apcera.me",
+		Port:               4242,
+		Credentials:        []*Credential{&Credential{"derek", "bella"}},
+		AuthTimeout:        1.0,
+		ClusterHost:        "127.0.0.1",
+		ClusterPort:        4244,
+		ClusterCredentials: []*Credential{&Credential{"route_user", "top_secret"}},
+		ClusterAuthTimeout: 1.0,
+		LogFile:            "/tmp/nats_cluster_test.log",
+		PidFile:            "/tmp/nats_cluster_test.pid",
+	}
+
+	// Setup URLs
+	r1, _ := url.Parse("nats-route://foo:bar@apcera.me:4245")
+	r2, _ := url.Parse("nats-route://foo:bar@apcera.me:4246")
+
+	golden.Routes = []*url.URL{r1, r2}
+
+	if !reflect.DeepEqual(golden, opts) {
+		t.Fatalf("Options are incorrect.\nexpected: %+v\ngot: %+v",
+			golden, opts)
+	}
+}
+
+func TestRouteConfigWithAuthAndCredentials(t *testing.T) {
+	opts, err := ProcessConfigFile("./configs/cluster_auth_and_credentials.conf")
 	if err != nil {
 		t.Fatalf("Received an error reading route config file: %v\n", err)
 	}
@@ -52,12 +83,12 @@ func TestRouteConfigWithExtraCredentials(t *testing.T) {
 		Port:               4242,
 		Username:           "derek",
 		Password:           "bella",
-		ExtraCredentials: []*Credential{&Credential{"derek2", "bella2"}},
 		AuthTimeout:        1.0,
 		ClusterHost:        "127.0.0.1",
 		ClusterPort:        4244,
 		ClusterUsername:    "route_user",
 		ClusterPassword:    "top_secret",
+		ClusterCredentials: []*Credential{&Credential{"route_user2", "top_secret2"}},
 		ClusterAuthTimeout: 1.0,
 		LogFile:            "/tmp/nats_cluster_test.log",
 		PidFile:            "/tmp/nats_cluster_test.pid",
