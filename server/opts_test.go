@@ -45,8 +45,7 @@ func TestConfigFile(t *testing.T) {
 	golden := &Options{
 		Host:        "apcera.me",
 		Port:        4242,
-		Username:    "derek",
-		Password:    "bella",
+		Credentials: []*Credential{&Credential{"derek", "bella"}},
 		AuthTimeout: 1.0,
 		Debug:       false,
 		Trace:       true,
@@ -96,10 +95,8 @@ func TestConfigFileWithCredentials(t *testing.T) {
 func TestConfigFileWithAuthAndCredentials(t *testing.T) {
 	golden := &Options{
 		Host:        "apcera.me",
-		Username:    "derek",
-		Password:    "bella",
 		Port:        4242,
-		Credentials: []*Credential{&Credential{"derek2", "bella2"}},
+		Credentials: []*Credential{&Credential{"derek", "bella"},&Credential{"derek2", "bella2"}},
 		AuthTimeout: 1.0,
 		Debug:       false,
 		Trace:       true,
@@ -125,8 +122,7 @@ func TestMergeOverrides(t *testing.T) {
 	golden := &Options{
 		Host:        "apcera.me",
 		Port:        2222,
-		Username:    "derek",
-		Password:    "spooky",
+		Credentials: []*Credential{&Credential{"derek", "spooky"}},
 		AuthTimeout: 1.0,
 		Debug:       true,
 		Trace:       true,
@@ -144,8 +140,7 @@ func TestMergeOverrides(t *testing.T) {
 	// Overrides via flags
 	opts := &Options{
 		Port:        2222,
-		Username:    "derek",
-		Password:    "spooky",
+		Credentials: []*Credential{&Credential{"derek", "spooky"}},
 		Debug:       true,
 		HTTPPort:    DEFAULT_HTTP_PORT,
 		ProfPort:    6789,
@@ -197,9 +192,7 @@ func TestMergeOverridesWithAuthAndCredentials(t *testing.T) {
 	golden := &Options{
 		Host:        "apcera.me",
 		Port:        2222,
-		Username:    "derek",
-		Password:    "spooky",
-		Credentials: []*Credential{&Credential{"derek2", "spooky2"}},
+		Credentials: []*Credential{&Credential{"derek", "spooky"},&Credential{"derek2", "spooky2"}},
 		AuthTimeout: 1.0,
 		Debug:       true,
 		Trace:       true,
@@ -217,9 +210,7 @@ func TestMergeOverridesWithAuthAndCredentials(t *testing.T) {
 	// Overrides via flags
 	opts := &Options{
 		Port:        2222,
-		Username:    "derek",
-		Password:    "spooky",
-		Credentials: []*Credential{&Credential{"derek2", "spooky2"}},
+		Credentials: []*Credential{&Credential{"derek", "spooky"},&Credential{"derek2", "spooky2"}},
 		Debug:       true,
 		HTTPPort:    DEFAULT_HTTP_PORT,
 		ProfPort:    6789,

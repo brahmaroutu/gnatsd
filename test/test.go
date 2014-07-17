@@ -210,8 +210,8 @@ func doRouteAuthConnect(t tLogger, c net.Conn, user, pass, id string) {
 }
 
 func setupRouteEx(t tLogger, c net.Conn, opts *server.Options, id string) (sendFun, expectFun) {
-	user := opts.ClusterUsername
-	pass := opts.ClusterPassword
+	user := opts.ClusterCredentials[0].Username
+	pass := opts.ClusterCredentials[0].Password
 	doRouteAuthConnect(t, c, user, pass, id)
 	send := sendCommand(t, c)
 	expect := expectCommand(t, c)

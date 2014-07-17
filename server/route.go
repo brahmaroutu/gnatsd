@@ -271,7 +271,7 @@ func (s *Server) StartRouting() {
 		MaxPayload:   MAX_PAYLOAD_SIZE,
 	}
 	// Check for Auth items
-	if s.opts.ClusterUsername != "" || len(s.opts.ClusterCredentials)>0 {
+	if len(s.opts.ClusterCredentials)>0 {
 		info.AuthRequired = true
 	}
 	s.routeInfo = info

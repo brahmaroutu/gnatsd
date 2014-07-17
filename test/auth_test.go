@@ -111,17 +111,14 @@ const AUTH_PASS2 = "foobar2"
 func runAuthServerWithUserPass() *server.Server {
 	opts := DefaultTestOptions
 	opts.Port = AUTH_PORT
-	opts.Username = AUTH_USER
-	opts.Password = AUTH_PASS
+	opts.Credentials = append(opts.Credentials, &server.Credential{AUTH_USER,AUTH_PASS})
 	return RunServer(&opts)
 }
 
 func runAuthServerWithMultipleUserPass() *server.Server {
 	opts := DefaultTestOptions
 	opts.Port = AUTH_PORT
-	opts.Username = AUTH_USER
-	opts.Password = AUTH_PASS
-	opts.Credentials = []*server.Credential{&server.Credential{AUTH_USER2,AUTH_PASS2}}
+	opts.Credentials = []*server.Credential{&server.Credential{AUTH_USER,AUTH_PASS},&server.Credential{AUTH_USER2,AUTH_PASS2}}
 	return RunServer(&opts)
 }
 
